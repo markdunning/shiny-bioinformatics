@@ -1,0 +1,115 @@
+---
+title: "Shiny Tutorial"
+author: "Mark Dunning"
+date: '`r format(Sys.time(), "Last modified: %d %b %Y")`'
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Using Shiny to make genomics datasets more accessible
+
+## R packages
+
+```{r eval=FALSE}
+install.packages("shiny")
+source("http://www.bioconductor.org/biocLite.R")
+biocLite("breastCancerNKI")
+```
+
+## References
+
+- Shout-out to Monash Bioinformatics Platform for making their course notes available:- [LINK](https://monashbioinformaticsplatform.github.io/2016-11-03-r-shiny/)
+- Rstudio have a good collection of tutorial videos:- [LINK](http://shiny.rstudio.com/tutorial/)
+- The [Shiny showcase](https://www.rstudio.com/products/shiny/shiny-user-showcase/)
+- A [Shiny cheatsheet](http://shiny.rstudio.com/articles/cheatsheet.html) to print off and pin to your desk
+
+## What is Shiny (and what Shiny isn't)?
+
+- A way to run R code interactively
+- A great way of letting others access your data without requiring Bioinformatics skills
+- But not a substitute for an interface such as RStudio
+
+## How have we used Shiny in the C.I.
+
+- [Running a statistics course](http://bioinformatics.cruk.cam.ac.uk/stats/TwoSampleTest/)
+- [A data portal]()
+- [Demo at the Science Festival](http://bioinformatics.cruk.cam.ac.uk/apps/apps/mutation-demo/)
+
+# First look at a Shiny app
+
+***File*** -> ***New File*** -> ***Shiny web app***
+
+You should get a file called `app.R`. Hit the ***Run App** Button should open something like the following in a new browser window. 
+
+```{r echo=FALSE}
+
+library(shiny)
+
+# Define UI for application that draws a histogram
+ui <- fluidPage(
+   
+   # Application title
+   titlePanel("Old Faithful Geyser Data"),
+   
+   # Sidebar with a slider input for number of bins 
+   sidebarLayout(
+      sidebarPanel(
+         sliderInput("bins",
+                     "Number of bins:",
+                     min = 1,
+                     max = 50,
+                     value = 30)
+      ),
+      
+      # Show a plot of the generated distribution
+      mainPanel(
+         plotOutput("distPlot")
+      )
+   )
+)
+
+# Define server logic required to draw a histogram
+server <- function(input, output) {
+   
+   output$distPlot <- renderPlot({
+      # generate bins based on input$bins from ui.R
+      x    <- faithful[, 2] 
+      bins <- seq(min(x), max(x), length.out = input$bins + 1)
+      
+      # draw the histogram with the specified number of bins
+      hist(x, breaks = bins, col = 'darkgray', border = 'white')
+   })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+
+
+```
+
+The R script defines the UI (user interface), code run by the server and ends with an instruction to run the app. Note that older Shiny apps were defined in two separate files (`UI.R` and `server.R`). 
+
+In this example app we are creating a histogram of a pre-defined dataset (`faithful`), with the user being able to specify how many bins to use in the histogram. The UI part of the script defines an argument `bins` that is passed to the function in the server function to define how the histogram is displayed. This is the basic principle of Shiny. A slider bar is used to choose a different value of `bins`, and the plot is automatically updated when a new value is selected. In the user interface we have control over the maximum and minimum values of `bins`, how to increment the values and the label used. The `shiny` library does the hard work of displaying the bar on the HTML page.
+
+
+## Inputs
+
+- `selectInput`
+- `checkboxInput`
+- `radioButons`
+- `textInput`
+
+## Exercise
+
+- Create a dropdown box to select either red, blue or green histogram
+- Create a textbox to define the title on the plot
+
+## Outputs
+
+# Sharing your app
+
