@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## R packages
 
+You will need the following R packages to run this tutorial
 ```{r eval=FALSE}
 install.packages("shiny")
 source("http://www.bioconductor.org/biocLite.R")
@@ -24,7 +25,7 @@ biocLite("breastCancerNKI")
 ## References
 
 - Shout-out to Monash Bioinformatics Platform for making their course notes available:- [LINK](https://monashbioinformaticsplatform.github.io/2016-11-03-r-shiny/)
-- Rstudio have a good collection of tutorial videos:- [LINK](http://shiny.rstudio.com/tutorial/)
+- Rstudio have a good collection of [tutorial videos](http://shiny.rstudio.com/tutorial/)
 - The [Shiny showcase](https://www.rstudio.com/products/shiny/shiny-user-showcase/)
 - A [Shiny cheatsheet](http://shiny.rstudio.com/articles/cheatsheet.html) to print off and pin to your desk
 - Shiny Exercises [Part 1](http://r-exercises.com/2016/12/12/building-shiny-app-exercises-part-1/) and [Part 2](http://r-exercises.com/2016/12/18/building-shiny-app-exercises-part-2/)
@@ -99,7 +100,7 @@ shinyApp(ui = ui, server = server)
 
 
 
-In this example app we are creating a histogram of a pre-defined dataset (`faithful`), with the user being able to specify how many bins to use in the histogram. The UI part of the script defines an argument `bins` that is passed to the function in the server function to define how the histogram is displayed. This is the basic principle of Shiny. A slider bar is used to choose a different value of `bins`, and this value can be accessed as `input$bins` from within in the `server` function. The histogram itself is created by a `renderPlot` function and assigned to the value `output$distPlot`. In the `ui` function you will see that this plot appears in the main panel using the `plotOutput` function. The argument to `plotOutput` is `distPlot`; which was the variable that we assigned to the plot.
+In this example app we are creating a histogram of a pre-defined dataset (`faithful`), with the user being able to specify how many bins to use in the histogram. The UI part of the script defines an argument `bins` that is used to define the parameters of how the histogram is displayed. This is the basic principle of Shiny. A slider bar is used to choose a different value of `bins`, and this value can be accessed as `input$bins` from within in the `server` function. The histogram itself is created by a `renderPlot` function and assigned to the value `output$distPlot`. In the `ui` function you will see that this plot appears in the main panel using the `plotOutput` function. The argument to `plotOutput` is `distPlot`; which was the variable that we assigned to the plot.
 
 ## HTML and other formatting
 
@@ -116,7 +117,7 @@ You can add other text to the sidebar in order to provide explanations and help 
                      min = 1,
                      max = 50,
                      value = 30),
-        helpText("This slider defines the number of bins to divided the data into"),
+        helpText("This slider defines the number of bins to divide the data into"),
         a("More about the histogram here", href="https://en.wikipedia.org/wiki/Histogram"),
         br(),
         p("App developed by University of Cambridge"),
@@ -145,7 +146,7 @@ ui <- fluidPage(
                      min = 1,
                      max = 50,
                      value = 30),
-        helpText("This slider defines the number of bins to divided the data into"),
+        helpText("This slider defines the number of bins to divide the data into"),
         a("More about the histogram here", href="https://en.wikipedia.org/wiki/Histogram"),
         br(),
         p("App developed by University of Cambridge"),
@@ -182,7 +183,7 @@ shinyApp(ui = ui, server = server)
 
 In the histogram example we saw the use of `sliderInput` which allows the user to select a numeric value between some lower and upper bound. When faced with new R functions it is usually a good idea to read the help page; `?sliderInput`. We also have control over the amount by which the values change when the user slides the bar with `step` and the text label displayed above the bar.
 
-Other types of input are available for us to choose from:-
+Other types of input are available for us to choose from and follow a similar syntax. i.e. each type of input has a `value` and `label` argument
 
 - `selectInput`
     + select a value from a drop-down box
@@ -198,6 +199,7 @@ Other types of input are available for us to choose from:-
     + special input to upload a file
 
 To add an extra input, we need to add it as an argument to the `sidebarPanel` function. Lets say that we wanted to add the ability to change the colour of our histogram to either red, green or blue. We could do this using a `radioButton`. The order of the arguments to `sidebarPanel` dictates the order in which the various elements are rendered in the HTML.
+
 
 ```{r eval=FALSE}
       ######
@@ -222,6 +224,8 @@ To add an extra input, we need to add it as an argument to the `sidebarPanel` fu
 
 To actually access the value that has been selected, we need to modify the code in the `server` section of our `app.R` script. On the line that creates the histogram we merely change the `col` argument from `darkgray` to `input$colour`.
 
+
+
 ```{r eval=FALSE}
 server <- function(input, output) {
    
@@ -236,6 +240,7 @@ server <- function(input, output) {
 }
 
 ```
+
 
 
 ```{r echo=FALSE}
@@ -283,7 +288,7 @@ server <- function(input, output) {
       # draw the histogram with the specified number of bins
 
       
-      hist(x, breaks = bins, col = input$colour, border = 'white',main=input$title)
+      hist(x, breaks = bins, col = input$colour, border = 'white')
    })
    
 }
@@ -291,6 +296,110 @@ server <- function(input, output) {
 # Run the application 
 shinyApp(ui = ui, server = server)
 
+```
+
+
+Note, that the capatilisation of the colours is important in the definition of the `radioInput`, as `red`, `green` and `blue` are all valid colours in R, whereas `Red` is not. If you wanted the names of the colours to be displayed nicer in the UI, you can change the `Choices` vector.
+
+```{r eval=FALSE}
+        radioButtons("colour","Colour of histogram",choices=c("Red","Green","Blue"),selected="Red"),
+
+```
+
+However, as these are not valid names of colours in R, we need to do some extra processing before we can call the `hist` function. We can access the value of `input$colour` and modify accordingly. For example, we could use the `tolower` function to convert to lower case. 
+
+```{r eval=FALSE}
+   output$distPlot <- renderPlot({
+      # generate bins based on input$bins from ui.R
+      x    <- faithful[, 2] 
+      bins <- seq(min(x), max(x), length.out = input$bins + 1)
+      
+      # draw the histogram with the specified number of bins
+      mycolour <- tolower(input$colour)
+      
+      hist(x, breaks = bins, col = mycolour, border = 'white')
+   })
+```
+
+Sometimes you might want to use some kind of control structure to translate the input parameters into the arguments for plotting. This would be a particularly confusing way of controlling the colour of the plot.
+
+```{r eval=FALSE}
+
+  colour <- input$colour
+
+  if (colour == "Red"){
+    mycolour <- "green"
+  } else if (colour == "Green"){
+    mycolour <- "blue"
+  } else {
+    mycolour <- "red"
+  }
+  hist(x, breaks = bins, col = mycolour, border = 'white')
+```
+
+
+```{r echo=FALSE}
+library(shiny)
+
+# Define UI for application that draws a histogram
+ui <- fluidPage(
+   
+   # Application title
+   titlePanel("Old Faithful Geyser Data"),
+   
+   # Sidebar with a slider input for number of bins 
+   sidebarLayout(
+      sidebarPanel(
+        h1("Data  Exploration"),
+        h2("The histogram"),
+        radioButtons("colour","Colour of histogram",choices=c("Red","Green","Blue"),selected="Red"),
+         sliderInput("bins",
+                     "Number of bins:",
+                     min = 1,
+                     max = 50,
+                     value = 30),
+        helpText("This slider defines the number of bins to divided the data into"),
+        a("More about the histogram here", href="https://en.wikipedia.org/wiki/Histogram"),
+        br(),
+        p("App developed by University of Cambridge"),
+        img(src="http://www.cruk.cam.ac.uk/sites/all/themes/cambridge_theme/images/interface/main-logo-small.png")
+      ),
+      
+      # Show a plot of the generated distribution
+      mainPanel(
+         plotOutput("distPlot")
+      )
+   )
+)
+
+# Define server logic required to draw a histogram
+server <- function(input, output) {
+   
+   output$distPlot <- renderPlot({
+      # generate bins based on input$bins from ui.R
+      x    <- faithful[, 2] 
+      bins <- seq(min(x), max(x), length.out = input$bins + 1)
+      
+      # draw the histogram with the specified number of bins
+
+      
+        colour <- input$colour
+
+        if (colour == "Red"){
+          mycolour <- "green"
+        } else if (colour == "Green"){
+          mycolour <- "blue"
+        } else {
+          mycolour <- "red"
+        }
+      
+      hist(x, breaks = bins, col = mycolour, border = 'white')
+   })
+   
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
 ```
 
 
@@ -342,7 +451,7 @@ server <- function(input, output) {
    
    output$boxPlot <- renderPlot({
 
-       boxplot(x)
+       boxplot(x,horizontal=TRUE)
 
    })
 }
@@ -378,7 +487,6 @@ ui <- fluidPage(
       # Show a plot of the generated distribution
       mainPanel(
          plotOutput("distPlot"),
-         verbatimTextOutput("summary"),
          plotOutput("boxPlot")
       )
    )
@@ -404,7 +512,6 @@ server <- function(input, output) {
    })
    
    output$boxPlot <- renderPlot({
-      x <- faithful[,2]
       boxplot(x,horizontal = TRUE)
      
    })
