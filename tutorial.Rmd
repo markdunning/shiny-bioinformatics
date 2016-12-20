@@ -321,7 +321,7 @@ However, as these are not valid names of colours in R, we need to do some extra 
    })
 ```
 
-Sometimes you might want to use some kind of control structure to translate the input parameters into the arguments for plotting. This would be a particularly confusing way of controlling the colour of the plot.
+Sometimes you might want to use some kind of control structure to translate the input parameters into the arguments for plotting. This would be a particularly confusing way of controlling the colour of the plot!
 
 ```{r eval=FALSE}
 
@@ -451,7 +451,7 @@ server <- function(input, output) {
    
    output$boxPlot <- renderPlot({
 
-       boxplot(x,horizontal=TRUE)
+       boxplot(x,horizontal=TRUE,col=input$colour)
 
    })
 }
@@ -512,7 +512,7 @@ server <- function(input, output) {
    })
    
    output$boxPlot <- renderPlot({
-      boxplot(x,horizontal = TRUE)
+      boxplot(x,horizontal = TRUE,col=input$colour)
      
    })
 }
@@ -547,7 +547,7 @@ We will add a numerical summary of our dataset and a message to report the numbe
 
 ```
 
-In the `server` script we include the code to compute the relevant outputs.
+In the `server` function we include the code to compute the relevant outputs. Note that in the first line of the function we define our vector `x` so that it is visible to all output functions. It probably wouldn't be an issue with this small example, but for larger datasets we really only want to create the dataset once and be able to access it from all output functions. However, this means that the dataset cannot be modified once the app has started. If we wanted data that can be updated, we would have to use another approach that we will describe in the next section.
 
 ```{r eval=FALSE}
 server <- function(input, output) {
@@ -560,12 +560,12 @@ server <- function(input, output) {
       # draw the histogram with the specified number of bins
 
       
-      hist(x, breaks = bins, col = input$colour, border = 'white',main=input$title)
+      hist(x, breaks = bins, col = input$colour, border = 'white')
    })
    
    output$boxPlot <- renderPlot({
 
-       boxplot(x)
+       boxplot(x,col=input$colour)
 
    })
    
@@ -637,7 +637,7 @@ server <- function(input, output) {
    })
    
    output$boxPlot <- renderPlot({
-      boxplot(x,horizontal = TRUE)
+      boxplot(x,horizontal = TRUE,col=input$colour)
      
    })
    
