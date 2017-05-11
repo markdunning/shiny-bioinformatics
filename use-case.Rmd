@@ -1,5 +1,5 @@
 ---
-title: "Shiny Tutorial"
+title: "Shiny for Bioinformatics Tutorial"
 author: "Mark Dunning"
 date: '`r format(Sys.time(), "Last modified: %d %b %Y")`'
 output: html_document
@@ -20,9 +20,9 @@ source("http://www.bioconductor.org/biocLite.R")
 biocLite("breastCancerNKI")
 ```
 
-Briefly, this dataset comprises the gene expression profiling of breast cancer patients. There is extensive clinical data available, but we will be focussing on the ER (Estrogen Receptor) status of each patient. This variable (either positive or negative) is known to predict survival.
+Briefly, this dataset comprises the gene expression profiling of breast cancer patients. There is extensive clinical data available, but we will be focusing on the ER (Estrogen Receptor) status of each patient. This variable (either positive or negative) is known to predict survival.
 
-The UI for the app will contain a simple text box where the user can type the name of the gene they wish to interrogatae. We will give a default value of `ESR1`, which we expect to show a significant difference between the conditions.
+The UI for the app will contain a drop-down where the user can type the name of the gene they wish to interrogate. We will give a limited set of options and a default value of `ESR1`, which we expect to show a significant difference between the conditions.
 
 ```{r eval=FALSE}
 
@@ -34,7 +34,9 @@ ui <- fluidPage(
    
    sidebarLayout(
       sidebarPanel(
-         textInput("thegene","Gene to Analyse",value = "ESR1")
+         selectInput("thegene","Gene to Analyse",
+                     choices=c("ESR1","ERBB2","PTEN"),
+                       selected  = "ESR1")
       ),
       
       # Show a plot of the generated distribution
@@ -48,6 +50,8 @@ ui <- fluidPage(
 
 The `server` code has to deal with loading the Bioconductor package and creating data objects that we can interrogate. The standard way to access data from an experimental data package involves the use of the functions `exprs` (to get expression values), `fData` (for gene annotation) and `pData` (for sample annotations). 
 
+Note that this code only needs to be run once for the initial setup of the app. It could be placed in a separate script and run with the `source(...)` function to make the code a bit cleaner
+
 ```{r message=FALSE}
   library(breastCancerNKI)
   library(Biobase)
@@ -57,14 +61,20 @@ The `server` code has to deal with loading the Bioconductor package and creating
   er.status <- pData(nki)$er
 ```
 
-The matrix `expression.values` contains the values we would like to plot and the `er.status` vector is the categorical variable corresponding to ER status. We need to select the appropriate row from the matrix. 
+The matrix `expression.values` contains the values we would like to plot and the `er.status` vector is the categorical variable corresponding to ER status. 
 
 ```{r}
 table(er.status)
 expression.values[1:5,1:5]
 ```
 
-A slight complication is that the rows of the expression matrix are the manufacturer identifier and the user is going to be inputting a gene name (gene symbol). So we have to perform a mapping via the `features` matrix.
+To make a boxplot of the expression level of a particular gene, we can use the formula syntax in R
+
+```{r}
+boxplot(expression.values[1,] ~ er.status)
+```
+
+A slight complication is that the rows of the expression matrix are the manufacturer identifier and the user is going to be inputting a gene name (gene symbol). So to identify the gene we are interested in (`ESR1` for example) we have to perform a mapping via the `features` matrix.
 
 ```{r}
 features[1:5,1:5]
@@ -76,6 +86,8 @@ The relevant column in `features` is `HUGO.gene.symbol` and we will use the `mat
 probe.id <- as.character(features$probe[match(gene, features$HUGO.gene.symbol)])
 values <- expression.values[probe.id,]
 ```
+
+In this simple app, the user is expected to type the name of the gene into a text box. The value they have typed can be retrieved from the server code using `input$thegene`.
 
 The code for the app then becomes:-
 
@@ -89,7 +101,9 @@ ui <- fluidPage(
    
    sidebarLayout(
       sidebarPanel(
-         textInput("thegene","Gene to Analyse",value = "ESR1")
+         selectInput("thegene","Gene to Analyse",
+                     choices=c("ESR1","ERBB2","PTEN"),
+                       selected  = "ESR1")
       ),
       
       # Show a plot of the generated distribution
@@ -135,7 +149,9 @@ ui <- fluidPage(
    
    sidebarLayout(
       sidebarPanel(
-         textInput("thegene","Gene to Analyse",value = "ESR1")
+         selectInput("thegene","Gene to Analyse",
+                     choices=c("ESR1","ERBB2","PTEN"),
+                       selected  = "ESR1")
       ),
       
       # Show a plot of the generated distribution
@@ -169,73 +185,125 @@ server <- function(input, output) {
 shinyApp(ui = ui, server = server)
 ```
 
+## Customising the plot
+
+As we have seen previously, we can also add options to allow the user to customise the appearance of the plot
+
+```{r eval=FALSE}
+library(shiny)
+
+ui <- fluidPage(
+   
+   # Application title
+   titlePanel("Interrogating the NKI breast cancer dataset"),
+   
+   sidebarLayout(
+      sidebarPanel(
+         selectInput("thegene","Gene to Analyse",
+                     choices=c("ESR1","ERBB2","PTEN"),
+                       selected  = "ESR1"),
+                 radioButtons("colour","Colour of histogram",choices=c("red","green","blue"),selected="red")
+      ),
+      
+      # Show a plot of the generated distribution
+      mainPanel(
+         plotOutput("boxplot")
+      )
+   )
+)
+
+server <- function(input, output) {
+   
+  library(breastCancerNKI)
+  
+  data(nki)
+  expression.values <- exprs(nki)
+  features <- fData(nki)
+  er.status <- pData(nki)$er
+  
+   output$boxplot <- renderPlot({
+
+     gene <- input$thegene
+     probe.id <- as.character(features$probe[match(gene, features$HUGO.gene.symbol)])
+     
+     values <- expression.values[probe.id,]
+     boxplot(values ~ er.status,col=input$colour)
+   })
+   
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+```
+
+
+```{r echo=FALSE}
+library(shiny)
+
+ui <- fluidPage(
+   
+   # Application title
+   titlePanel("Interrogating the NKI breast cancer dataset"),
+   
+   sidebarLayout(
+      sidebarPanel(
+         selectInput("thegene","Gene to Analyse",
+                     choices=c("ESR1","ERBB2","PTEN"),
+                       selected  = "ESR1"),
+                 radioButtons("colour","Colour of histogram",choices=c("red","green","blue"),selected="red")
+      ),
+      
+      # Show a plot of the generated distribution
+      mainPanel(
+         plotOutput("boxplot")
+      )
+   )
+)
+
+server <- function(input, output) {
+   
+  library(breastCancerNKI)
+  
+  data(nki)
+  expression.values <- exprs(nki)
+  features <- fData(nki)
+  er.status <- pData(nki)$er
+  
+   output$boxplot <- renderPlot({
+
+     gene <- input$thegene
+     probe.id <- as.character(features$probe[match(gene, features$HUGO.gene.symbol)])
+     
+     values <- expression.values[probe.id,]
+     boxplot(values ~ er.status,col=input$colour)
+   })
+   
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+```
+
+
 ## Introducing "reactives"
 
-However, the app has a rather annoying feature of trying to re-compute the boxplot as soon as you start typing in the text box. We can solve this by adding an `actionButton` in the user-interface, so that the computation will only begin once the user has clicked **Go!**
+https://shiny.rstudio.com/tutorial/lesson6/
+
+Unfortunately, we have introduced some inefficiency into our app. The code inside the `renderPlot` function will be triggered whenever the user changes the options for the gene name or the color of the plot. This code includes the steps to filter the expression data based on the gene that is currently selected. It make sense for this code to be re-run when a new gene is selected, but not if a different colour is selected (which is the current state of affairs). 
+
+A solution is to define a *reactive* function. These are special functions in `shiny` that caches it's values, and will only be re-run when any of these values become outdated. 
+
+The functions can be called from within other functions inside the server script. For example, code that creates a plot. The first time the function is called, the output values are stored in memory. The next time the function is called, the function will check if any of the inputs have been updated. If not, the results of the previous calculation will be returned. This is ideal behaviour in the situation we have described.
+
+In our example, we might define a function `filterByExpression` which basically contains the steps we already had inside the boxplot code. The last line of the function defines the object that is returned. 
+
+Within the `renderPlot` function we can call the `filterByExpression` function to retrieve the values for a particular gene.
+
+We add a `Sys.sleep()` statement to help illustrate the fact that `filterByExpression` is only run when the name of the gene is changed by the user.
 
 ```{r eval=FALSE}
-ui <- fluidPage(
-  
-  # Application title
-  titlePanel("Interrogating the NKI breast cancer dataset"),
-  
-  sidebarLayout(
-    sidebarPanel(
-      textInput("thegene","Gene to Analyse",value = "ESR1"),
-      actionButton("go","Go!")
-    ),
-    
-    # Show a plot of the generated distribution
-    mainPanel(
-      plotOutput("boxplot"))
-  )
-)
-
-```
-
-The `server` code needs to a bit of adapting so that the boxplot is only generated once the button has been clicked. We create use the `eventReactive` function that depends upon the value of `input$go`. The code inside this new function becomes the code from before that created the boxplot. Now our definition of `output$boxplot` is a call to our new reactive function `gene.boxplot`. Crucially, this code will only be executed if the go button has been clicked.
-
-```{r eval=FALSE}
-  
-gene.boxplot <- eventReactive(input$go, {
-    
-    gene <- input$thegene
-    probe.id <- as.character(features$probe[match(gene, features$HUGO.gene.symbol)])
-    
-    values <- expression.values[probe.id,]
-    boxplot(values ~ er.status)
-  })
-  
-  output$boxplot <- renderPlot({
-    gene.boxplot()
-  }
-  )
-  
-```
-
-
-```{r echo=FALSE}
-library(shiny)
-
-
-ui <- fluidPage(
-  
-  # Application title
-  titlePanel("Interrogating the NKI breast cancer dataset"),
-  
-  sidebarLayout(
-    sidebarPanel(
-      textInput("thegene","Gene to Analyse",value = "ESR1"),
-      actionButton("go","Go!")
-    ),
-    
-    # Show a plot of the generated distribution
-    mainPanel(
-      plotOutput("boxplot")      )
-  )
-)
 server <- function(input, output) {
-  
+   
   library(breastCancerNKI)
   
   data(nki)
@@ -243,58 +311,55 @@ server <- function(input, output) {
   features <- fData(nki)
   er.status <- pData(nki)$er
   
-  gene.boxplot <- eventReactive(input$go, {
-    
-    gene <- input$thegene
-    probe.id <- as.character(features$probe[match(gene, features$HUGO.gene.symbol)])
-    
-    values <- expression.values[probe.id,]
-    boxplot(values ~ er.status)
+  filterByExpression <- reactive({
+     gene <- input$thegene
+     probe.id <- as.character(features$probe[match(gene, features$HUGO.gene.symbol)])
+      Sys.sleep(10)
+     expression.values[probe.id,]
   })
   
-  output$boxplot <- renderPlot({
-    gene.boxplot()
-  }
-  )
-  
-}
+   output$boxplot <- renderPlot({
 
-# Run the application 
-shinyApp(ui = ui, server = server)
+     gene <- input$thegene
+     probe.id <- as.character(features$probe[match(gene, features$HUGO.gene.symbol)])
+     
+     values <- filterByExpression()
+     
+     boxplot(values ~ er.status,col=input$colour)
+   })
+   
+}
 
 ```
 
 
-## Exercise
-
-- Create a new output the displays the result of a standard t-test to test for a difference between ER positive and negative samples
-    + HINT use the code to make a boxplot as a template.
-    + `t.test` can be used to perform the test
+Try changing the values for gene name and boxplot colour in the following shiny app. 
 
 ```{r echo=FALSE}
 library(shiny)
 
-
 ui <- fluidPage(
-  
-  # Application title
-  titlePanel("Interrogating the NKI breast cancer dataset"),
-  
-  sidebarLayout(
-    sidebarPanel(
-      textInput("thegene","Gene to Analyse",value = "ESR1"),
-      actionButton("go","Go!")
-    ),
-    
-    # Show a plot of the generated distribution
-    mainPanel(
-      plotOutput("boxplot"),
-      verbatimTextOutput("ttest")
+   
+   # Application title
+   titlePanel("Interrogating the NKI breast cancer dataset"),
+   
+   sidebarLayout(
+      sidebarPanel(
+         selectInput("thegene","Gene to Analyse",
+                     choices=c("ESR1","ERBB2","PTEN"),
+                       selected  = "ESR1"),
+                 radioButtons("colour","Colour of histogram",choices=c("red","green","blue"),selected="red")
+      ),
+      
+      # Show a plot of the generated distribution
+      mainPanel(
+         plotOutput("boxplot")
       )
-  )
+   )
 )
+
 server <- function(input, output) {
-  
+   
   library(breastCancerNKI)
   
   data(nki)
@@ -302,35 +367,26 @@ server <- function(input, output) {
   features <- fData(nki)
   er.status <- pData(nki)$er
   
-  gene.boxplot <- eventReactive(input$go, {
-    
-    gene <- input$thegene
-    probe.id <- as.character(features$probe[match(gene, features$HUGO.gene.symbol)])
-    
-    values <- expression.values[probe.id,]
-    boxplot(values ~ er.status)
+  filterByExpression <- reactive({
+     gene <- input$thegene
+     probe.id <- as.character(features$probe[match(gene, features$HUGO.gene.symbol)])
+          Sys.sleep(10)
+     expression.values[probe.id,]
   })
   
-  output$boxplot <- renderPlot({
-    gene.boxplot()
-  }
-  )
-  
-  gene.test <- eventReactive(input$go,{
-    gene <- input$thegene
-    probe.id <- as.character(features$probe[match(gene, features$HUGO.gene.symbol)])
-    
-    values <- expression.values[probe.id,]
-    t.test(values~er.status)
-  })
-  
-  output$ttest <- renderPrint({
-    gene.test()
-  })
+   output$boxplot <- renderPlot({
+
+     gene <- input$thegene
+     probe.id <- as.character(features$probe[match(gene, features$HUGO.gene.symbol)])
+     
+     values <- filterByExpression()
+     
+     boxplot(values ~ er.status,col=input$colour)
+   })
+   
 }
 
 # Run the application 
 shinyApp(ui = ui, server = server)
-
 ```
 
