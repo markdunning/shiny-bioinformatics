@@ -8,6 +8,7 @@ runtime: shiny
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+devtools::install_github("hadley/emo")
 ```
 
 
@@ -20,6 +21,7 @@ You will need the following R packages to run this tutorial
 install.packages("shiny")
 source("http://www.bioconductor.org/biocLite.R")
 biocLite("breastCancerNKI")
+
 ```
 
 ## References
@@ -50,7 +52,9 @@ Create a new app with the following menus (call it `test` or something)
 
 **File** -> **New File** -> **Shiny web app**
 
-You should get a file called `app.R`. The R script defines the UI (user interface), code run by the server and ends with an instruction to run the app. Note that you might see some older Shiny apps that were defined in two separate files (`UI.R` and `server.R`). If you view this file in RStudio the option to run the app will appear in the toolbar. Hitting the **Run App** Button will create a new RStudio window this example app. You could also view in a web browser.
+A file called `app.R` should appear in RStudio. This R script defines the UI (user interface), code run by the server and ends with an instruction to run the app. Note that you might see some older Shiny apps that were defined in two separate files (`UI.R` and `server.R`). If you view this file in RStudio the option to run the app will appear in the toolbar. Hitting the **Run App** Button will create a new RStudio window this example app. Congratulations, you have just created your first shiny app `r emo::ji("tada")`
+
+You could also view in a web browser.
 
 ```{r echo=FALSE}
 
@@ -100,7 +104,36 @@ shinyApp(ui = ui, server = server)
 
 
 
-In this example app we are creating a histogram of a pre-defined dataset (`faithful`), with the user being able to specify how many bins to use in the histogram. The UI part of the script defines an argument `bins` that is used to define the parameters of how the histogram is displayed. This is the basic principle of Shiny. A slider bar is used to choose a different value of `bins`, and this value can be accessed as `input$bins` from within in the `server` function. The histogram itself is created by a `renderPlot` function and assigned to the value `output$distPlot`. In the `ui` function you will see that this plot appears in the main panel using the `plotOutput` function. The argument to `plotOutput` is `distPlot`; which was the variable that we assigned to the plot.
+In this example app we are creating a histogram of a pre-defined dataset (`faithful`), with the user being able to specify how many bins to use in the histogram. Let's first look at the part of the script that defines the interface.
+
+
+```{r eval=FALSE}
+ui <- fluidPage(
+   
+   # Application title
+   titlePanel("Old Faithful Geyser Data"),
+   
+   # Sidebar with a slider input for number of bins 
+   sidebarLayout(
+      sidebarPanel(
+         sliderInput("bins",
+                     "Number of bins:",
+                     min = 1,
+                     max = 50,
+                     value = 30)
+      ),
+      
+      # Show a plot of the generated distribution
+      mainPanel(
+         plotOutput("distPlot")
+      )
+   )
+)
+```
+
+- The UI part of the script defines an argument `bins` that is used to define the parameters of how the histogram is displayed. This is the basic principle of Shiny. 
+- A slider bar is used to choose a different value of `bins`, and this value can be accessed as `input$bins` from within in the `server` function. The histogram itself is created by a `renderPlot` function and assigned to the value `output$distPlot`. 
+- In the `ui` function you will see that this plot appears in the main panel using the `plotOutput` function. The argument to `plotOutput` is `distPlot`; which was the variable that we assigned to the plot.
 
 ## HTML and other formatting
 
@@ -181,7 +214,7 @@ shinyApp(ui = ui, server = server)
 
 ## Inputs
 
-In the histogram example we saw the use of `sliderInput` which allows the user to select a numeric value between some lower and upper bound. When faced with new R functions it is usually a good idea to read the help page; `?sliderInput`. We also have control over the amount by which the values change when the user slides the bar with `step` and the text label displayed above the bar.
+This histogram example uses the `sliderInput` function which allows the user to select a numeric value between some lower and upper bound. When faced with new R functions it is usually a good idea to read the help page; `?sliderInput`. We also have control over the amount by which the values change when the user slides the bar with `step` and the text label displayed above the bar.
 
 Other types of input are available for us to choose from and follow a similar syntax. i.e. each type of input has a `value` and `label` argument
 
@@ -198,7 +231,7 @@ Other types of input are available for us to choose from and follow a similar sy
 - `fileInput`
     + special input to upload a file
 
-To add an extra input, we need to add it as an argument to the `sidebarPanel` function. Lets say that we wanted to add the ability to change the colour of our histogram to either red, green or blue. We could do this using a `radioButton`. The order of the arguments to `sidebarPanel` dictates the order in which the various elements are rendered in the HTML.
+To add an extra input, we need to add it as an argument to the `sidebarPanel` function. We could do this using a `radioButton`. The order of the arguments to `sidebarPanel` dictates the order in which the various elements are rendered in the HTML.
 
 
 ```{r eval=FALSE}
@@ -235,6 +268,7 @@ server <- function(input, output) {
       bins <- seq(min(x), max(x), length.out = input$bins + 1)
       
       # draw the histogram with the specified number of bins
+      #Now change the colour of the histogram too
       hist(x, breaks = bins, col = input$colour, border = 'white')
    })
 }
@@ -321,12 +355,12 @@ However, as these are not valid names of colours in R, we need to do some extra 
    })
 ```
 
-Sometimes you might want to use some kind of control structure to translate the input parameters into the arguments for plotting. This would be a particularly confusing way of controlling the colour of the plot!
+Sometimes you might want to use some kind of control structure to translate the input parameters into the arguments for plotting. 
 
 ```{r eval=FALSE}
-
+  
   colour <- input$colour
-
+  # For some bizarre reason we might want to confuse the user!
   if (colour == "Red"){
     mycolour <- "green"
   } else if (colour == "Green"){
@@ -415,7 +449,7 @@ shinyApp(ui = ui, server = server)
 
 ## Outputs
 
-Similar to the way we can add now inputs as arguments to `sidebarPanel`, we can add new outputs by adding new arguments to `mainPanel`. Let's say we want to show a boxplot of the data in addition to the histogram. First we add a call to `plotOutput` in the `mainPanel` code.
+We can add new outputs by adding new arguments to `mainPanel`. Let's say we want to show a boxplot of the data in addition to the histogram. First we add a call to `plotOutput` in the `mainPanel` code.
 
 
 

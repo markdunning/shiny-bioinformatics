@@ -20,7 +20,7 @@ source("http://www.bioconductor.org/biocLite.R")
 biocLite("breastCancerNKI")
 ```
 
-Briefly, this dataset comprises the gene expression profiling of breast cancer patients. There is extensive clinical data available, but we will be focussing on the ER (Estrogen Receptor) status of each patient. This variable (either positive or negative) is known to correlate with survival.
+Briefly, this dataset comprises the gene expression profiling of breast cancer patients. There is extensive clinical data available, but we will be focussing on the ER (Estrogen Receptor) status of each patient. This variable (either positive or negative) is known to predict survival.
 
 The UI for the app will contain a simple text box where the user can type the name of the gene they wish to interrogatae. We will give a default value of `ESR1`, which we expect to show a significant difference between the conditions.
 
@@ -48,7 +48,7 @@ ui <- fluidPage(
 
 The `server` code has to deal with loading the Bioconductor package and creating data objects that we can interrogate. The standard way to access data from an experimental data package involves the use of the functions `exprs` (to get expression values), `fData` (for gene annotation) and `pData` (for sample annotations). 
 
-```{r}
+```{r message=FALSE}
   library(breastCancerNKI)
   library(Biobase)
   data(nki)
@@ -57,11 +57,16 @@ The `server` code has to deal with loading the Bioconductor package and creating
   er.status <- pData(nki)$er
 ```
 
-The matrix `expression.values` contains the values we would like to plot and the `er.status` vector is the categorical variable corresponding to ER status. We need to select the appropriate row from the matrix. A slight complication is that the rows of the expression matrix are the manufacturer identifier and the user is going to be inputting a gene name (gene symbol). So we have to perform a mapping via the `features` matrix.
+The matrix `expression.values` contains the values we would like to plot and the `er.status` vector is the categorical variable corresponding to ER status. We need to select the appropriate row from the matrix. 
 
 ```{r}
 table(er.status)
 expression.values[1:5,1:5]
+```
+
+A slight complication is that the rows of the expression matrix are the manufacturer identifier and the user is going to be inputting a gene name (gene symbol). So we have to perform a mapping via the `features` matrix.
+
+```{r}
 features[1:5,1:5]
 ```
 
@@ -74,7 +79,7 @@ values <- expression.values[probe.id,]
 
 The code for the app then becomes:-
 
-```{r eval=FALSE}
+```{r eval=FALSE, message=FALSE}
 library(shiny)
 
 ui <- fluidPage(
@@ -264,6 +269,7 @@ shinyApp(ui = ui, server = server)
 
 - Create a new output the displays the result of a standard t-test to test for a difference between ER positive and negative samples
     + HINT use the code to make a boxplot as a template.
+    + `t.test` can be used to perform the test
 
 ```{r echo=FALSE}
 library(shiny)
