@@ -31,6 +31,7 @@ biocLite("breastCancerNKI")
 - The [Shiny showcase](https://www.rstudio.com/products/shiny/shiny-user-showcase/)
 - A [Shiny cheatsheet](http://shiny.rstudio.com/articles/cheatsheet.html) to print off and pin to your desk
 - Shiny Exercises [Part 1](http://r-exercises.com/2016/12/12/building-shiny-app-exercises-part-1/) and [Part 2](http://r-exercises.com/2016/12/18/building-shiny-app-exercises-part-2/)
+- Videos from the [Shiny developers conference](https://www.rstudio.com/resources/webinars/shiny-developer-conference/)
 
 ## What is Shiny
 
@@ -132,8 +133,8 @@ ui <- fluidPage(
 ```
 
 - The UI part of the script defines an argument `bins` that is used to define the parameters of how the histogram is displayed. This is the basic principle of Shiny. 
-- A slider bar is used to choose a different value of `bins`, and this value can be accessed as `input$bins` from within in the `server` function. The histogram itself is created by a `renderPlot` function and assigned to the value `output$distPlot`. 
-- In the `ui` function you will see that this plot appears in the main panel using the `plotOutput` function. The argument to `plotOutput` is `distPlot`; which was the variable that we assigned to the plot.
+- A slider bar is used to choose a different value of `bins`, and this value can be accessed as `input$bins` from within in the `server` function (see later).  
+
 
 ## HTML and other formatting
 
@@ -255,7 +256,7 @@ To add an extra input, we need to add it as an argument to the `sidebarPanel` fu
       ######
 ```
 
-To actually access the value that has been selected, we need to modify the code in the `server` section of our `app.R` script. On the line that creates the histogram we merely change the `col` argument from `darkgray` to `input$colour`.
+To actually access the value that has been selected, we need to modify the code in the `server` section of our `app.R` script. On the line that creates the histogram we merely change the `col` argument from the original `darkgray` to `input$colour`.
 
 
 

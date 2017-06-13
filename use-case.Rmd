@@ -50,7 +50,9 @@ ui <- fluidPage(
 
 The `server` code has to deal with loading the Bioconductor package and creating data objects that we can interrogate. The standard way to access data from an experimental data package involves the use of the functions `exprs` (to get expression values), `fData` (for gene annotation) and `pData` (for sample annotations). 
 
-Note that this code only needs to be run once for the initial setup of the app. It could be placed in a separate script and run with the `source(...)` function to make the code a bit cleaner
+Note that this code only needs to be run once for the initial setup of the app. It could be placed in a separate script and run with the `source(...)` function to make the code a bit cleaner.
+
+We could also include code here for loading R objects or reading from a file as required.
 
 ```{r message=FALSE}
   library(breastCancerNKI)
