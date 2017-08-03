@@ -4,6 +4,6 @@ During this short workshop you will learn about the [Shiny](http://shiny.rstudio
 
 # Materials
 
-- [Introduction to Shiny](tutorial.html)
-- [Genomics Use-Case](use-case.html)
+- [Introduction to Shiny](tutorial)
+- [Genomics Use-Case](use-case)
 
